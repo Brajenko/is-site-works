@@ -1,0 +1,21 @@
+{
+    "tg": {
+        "user_tg_id": 780264903,
+        "tg_bot_token": "2028104921:AAFvFUhqX3aNSpe5Ydf_WaQuAmJehuCuW1U"
+    },
+    "gui": {
+        "primary_color": "#5898d4",
+        "positive_color": "#21ba45",
+        "negative_color": "#c10015"
+    },
+    "mysql": {
+        "name": "is_site_works_db",
+        "username": "is_site_works",
+        "password": "pwd",
+        "hostname": "localhost",
+        "port": 3306
+    },
+    "screenshots": {
+        "folder": "C:\\Users\\gosha\\projects\\site_monitor\\site_monitor\\screenshots\\"
+    }
+}
