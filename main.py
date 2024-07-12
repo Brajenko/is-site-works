@@ -1,26 +1,30 @@
-import logging
+import datetime as dt
 import json
-import asyncio
 import pathlib
 
-from nicegui import app, ui, Client
-from nicegui.page import page
 import validators
+from nicegui import Client, app, ui
+from nicegui.page import page
+from sqlalchemy.exc import ProgrammingError, DatabaseError
+
 import config
-from notifications.tgbot import send_message, check_id, get_link
+from notifications.tgbot import check_id, get_link
 
 try:
     from comparer.scheduler import MyScheduler
-    from db.utils import *
-    from db.schemas import *
-    
+    from db.schemas import TrackingCreateSchema
+    from db.utils import (
+        create_new_tracking,
+        delete_tracking_by_id,
+        get_all_trackings,
+    )
     scheduler = MyScheduler()
     for tr in get_all_trackings():
         scheduler.add_tracking(tr)
-except Exception:
+except ProgrammingError:
     pass
-
-logging.basicConfig(level=logging.INFO)
+except DatabaseError:
+    pass
 
 
 not_blank = {
@@ -28,16 +32,37 @@ not_blank = {
 }
 
 
-
 @app.exception_handler(500)
-async def exception_handler_500(request, exception: Exception):
+async def exception_handler_500(request, exc):
+    """Handle 500 internal server errors.
+
+    This function is an exception handler for 500 internal server errors. It displays a message
+    to the user indicating that the application is not configured or is misconfigured and provides
+    a link to the settings page.
+
+    Args:
+        request: The request object.
+        exc: The exception that was raised.
+
+    Returns:
+        A response object with a 500 status code.
+    """
     with Client(page('')) as client:
-        ui.markdown('# Приложение не настроено или настроено некорректно. Перейдите в [настройки](/settings)')
+        ui.markdown(
+            '# Приложение не настроено или настроено некорректно. Перейдите в [настройки](/settings)'
+        )
     return client.build_response(request, 500)
 
 
 @ui.page('/')
 def index():
+    """Define the main page of the application.
+
+    This function sets up the main page of the application. It includes functionality for adding
+    new tracking entries, displaying a list of all tracking entries, and deleting tracking entries.
+    It also sets up the UI elements for the main page, including input fields for new trackings,
+    a table to display existing trackings, and buttons for interaction.
+    """
     def delete_tracking(event):
         tr_id = event.args
         scheduler.remove_tracking_by_id(tr_id)
@@ -54,7 +79,7 @@ def index():
                 'Ссылка должна быть в правильном формате': lambda x: validators.url(
                     x
                 )
-                == True,
+                is True,
             },
         ).style('width: 50%')
         with ui.row().style('width: 50%; gap: 5%;'):
@@ -153,9 +178,9 @@ def index():
                     'interval': str(tr.interval),
                     'last_state': (
                         '/screenshots/'
-                        + tr.last_state.image_filename.split(config.screenshots_folder)[
-                            1
-                        ]
+                        + tr.last_state.image_filename.split(
+                            config.screenshots_folder
+                        )[1]
                         if tr.last_state
                         else 'none'
                     ),
@@ -225,6 +250,13 @@ def index():
 
 @ui.page('/settings')
 def settings():
+    """Define the settings page of the application.
+
+    This function sets up the settings page of the application. It allows users to configure
+    various aspects of the application, including Telegram settings, UI colors, MySQL database
+    connection settings, and the location for saving screenshots. It provides input fields for
+    each setting and a save button to persist changes.
+    """
     async def save():
         if tg_user_tg_id_input.value != config.tg_user_tg_id:
             try:
@@ -338,6 +370,7 @@ def settings():
         positive=config.positive_color,
         negative=config.negative_color,
     )
+
 
 try:
     ui.run(reload=False)

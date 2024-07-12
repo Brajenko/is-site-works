@@ -9,6 +9,21 @@ class Base(DeclarativeBase):
 
 
 class Tracking(Base):
+    """
+    Model representing a tracking entry.
+
+    Attributes:
+        id (Mapped[int]): Primary key, unique identifier for the tracking entry.
+        url (Mapped[str]): URL of the webpage to be tracked.
+        interval (Mapped[dt.timedelta]): Interval at which the webpage should be checked for changes.
+        save_all_screenshots (Mapped[bool]): Flag indicating whether to save screenshots for all checks or only when changes are detected.
+        created_at (Mapped[dt.datetime]): Timestamp when the tracking entry was created, automatically set to the current time.
+        web_page_states (Mapped[list['WebPageState']]): Relationship to associated WebPageState objects, representing different states of the tracked webpage.
+
+    Methods:
+        __repr__: Returns a string representation of the Tracking object for debugging.
+        __str__: Returns a string representation of the Tracking object for display.
+    """
     __tablename__ = 'trackings'
     id: Mapped[int] = mapped_column(primary_key=True)
     url: Mapped[str] = mapped_column(String(255))
@@ -29,6 +44,20 @@ class Tracking(Base):
 
 
 class WebPageState(Base):
+    """
+    Model representing a state of a tracked webpage.
+
+    Attributes:
+        id (Mapped[int]): Primary key, unique identifier for the webpage state.
+        tracking_id (Mapped[int]): Foreign key, references the id of the associated Tracking object.
+        tracking (Mapped[Tracking]): Relationship to the associated Tracking object.
+        image_filename (Mapped[str]): Filename of the screenshot representing this state.
+        created_at (Mapped[dt.datetime]): Timestamp when the webpage state was recorded, automatically set to the current time.
+
+    Methods:
+        __repr__: Returns a string representation of the WebPageState object for debugging.
+        __str__: Returns a string representation of the WebPageState object for display.
+    """
     __tablename__ = 'web_page_states'
     id: Mapped[int] = mapped_column(primary_key=True)
     tracking_id: Mapped[int] = mapped_column(
